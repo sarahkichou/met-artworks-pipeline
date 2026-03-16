@@ -8,6 +8,9 @@ For development purposes the pipeline is run on a limited subset.
 Some object IDs returned HTTP 403 responses during extraction.
 The pipeline records failed IDs and continues processing.
 
+During transformation, empty strings returned by the Met API were converted to NULL values to ensure correct handling of missing data in PostgreSQL.
+
+
 | Slice | Limit | Sleep | Success | Failed | Failure Code |
 |------|------|------|------|------|------|
 | 0–500 | 500 | 0.05 | 79 | 421 | 403 |

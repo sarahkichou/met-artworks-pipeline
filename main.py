@@ -3,63 +3,79 @@ import os
 from collections import Counter
 from extract import fetch_object_ids, fetch_object_details
 from transform import transform_objects
+from load import load_artworks
 
-def main():
-    ids_file = "object_ids.json"
-
-    if os.path.exists(ids_file):
-        with open(ids_file, "r") as file:
-            objects = json.load(file)
-    else:
-        objects = fetch_object_ids()
-        with open(ids_file, "w") as file:
-            json.dump(objects, file)
+def load_json_file(path):
+    with open(path, "r") as file:
+        return json.load(file)
     
-    details_file = "object_details.json"
+def save_json_file(path, data):
+    with open(path, "w") as file:
+        json.dump(data, file)
+    
+def get_object_ids(ids_file):
+    if os.path.exists(ids_file):
+        return load_json_file(ids_file)
 
+    objects = fetch_object_ids()
+    save_json_file(ids_file, objects) 
+    return objects
+
+
+def extract_details(objects, start, end, chunk_size):
+    all_details = []
+    all_failed_ids = {}
+
+    object_ids = objects["objectIDs"][start:end]
+    batch_num = 1
+
+    for chunk_start in range(0, len(object_ids), chunk_size):
+        chunk_ids = object_ids[chunk_start:chunk_start + chunk_size]
+
+        print(f"Processing batch {batch_num}")
+        batch_num += 1
+
+        chunk_objects = {"objectIDs": chunk_ids}
+        details, failed_ids = fetch_object_details(chunk_objects, limit=len(chunk_ids))
+
+        all_details.extend(details)
+        all_failed_ids.update(failed_ids)
+
+    return all_details, all_failed_ids
+
+def get_object_details(details_file, objects, start, end, chunk_size):
     if os.path.exists(details_file):
-        with open(details_file, "r") as file:
-            all_details = json.load(file)
+        all_details = load_json_file(details_file)
 
         print("Loaded existing extracted records:", len(all_details))
 
-    else:
-        all_details = []
-        all_failed_ids = {}
+        return all_details
 
-        # Test slice configuration
-        start = 300000
-        end = 320000
-        chunk_size = 100
+    all_details, all_failed_ids = extract_details(objects, start, end, chunk_size)
 
-        object_ids = objects["objectIDs"][start:end]
+    print("Successful records:", len(all_details))
+    print("Failed records:", len(all_failed_ids))
+    print(Counter(all_failed_ids.values()))
 
-        batch_num = 1
+    save_json_file(details_file, all_details)
+    return all_details
 
-        for chunk_start in range(0, len(object_ids), chunk_size):
-            chunk_ids = object_ids[chunk_start:chunk_start + chunk_size]
+def main():
+    ids_file = "data/object_ids.json"
+    details_file = "data/object_details.json"
 
-            print(f"Processing batch {batch_num}")
-            batch_num += 1
+    start = 300000
+    end = 320000
+    chunk_size = 100
 
-            chunk_objects = {"objectIDs": chunk_ids}
+    objects = get_object_ids(ids_file)
+    all_details = get_object_details(details_file, objects, start, end, chunk_size)
 
-            details, failed_ids = fetch_object_details(chunk_objects, limit=len(chunk_ids))
-
-            all_details.extend(details)
-            all_failed_ids.update(failed_ids)
-
-        print("Successful records:", len(all_details))
-        print("Failed records:", len(all_failed_ids))
-        print("403 failures:", list(all_failed_ids.values()).count(403))
-
-        print(Counter(all_failed_ids.values()))
-
-        with open(details_file, "w") as file:
-            json.dump(all_details, file)
-    
     met_df = transform_objects(all_details)
     print(met_df.shape)
+    print((met_df == "").sum())
+
+    load_artworks(met_df)
 
 if __name__ == "__main__":
     main()
