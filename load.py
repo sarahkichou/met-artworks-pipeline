@@ -1,53 +1,73 @@
 import psycopg2
 
-create_table = """
+create_artists_table = """
+CREATE TABLE IF NOT EXISTS artists (
+    artist_id int PRIMARY KEY,
+    artist_display_name text,
+    artist_nationality text,
+    artist_gender text
+)
+""" 
+
+insert_artists = """
+INSERT INTO artists (
+    artist_id,
+    artist_display_name,
+    artist_nationality,
+    artist_gender
+)
+
+VALUES (%s, %s, %s, %s)
+ON CONFLICT (artist_id) DO NOTHING
+"""
+
+create_artworks_table = """
 CREATE TABLE IF NOT EXISTS artworks (
-    objectID int PRIMARY KEY,
-    isHighlight boolean, 
+    object_id int PRIMARY KEY,
+    artist_id int,
+    FOREIGN KEY (artist_id) REFERENCES artists(artist_id),
+    is_highlight boolean, 
     department text,
-    objectName text,
+    object_name text,
     title text,
     culture text,
     period text,
-    artistDisplayName text,
-    artistNationality text,
-    artistGender text,
-    objectDate text,
-    objectBeginDate int,
-    objectEndDate int,
+    object_date text,
+    object_begin_date int,
+    object_end_date int,
     medium text,
     dimensions text,
     country text,
     classification text,
-    objectURL text
+    object_url text
     )
 """ 
 
 insert_artworks = """
-INSERT INTO artworks (objectID,
-    isHighlight, 
+INSERT INTO artworks (
+    object_id,
+    artist_id,
+    is_highlight, 
     department,
-    objectName,
+    object_name,
     title,
     culture,
     period,
-    artistDisplayName,
-    artistNationality,
-    artistGender,
-    objectDate,
-    objectBeginDate,
-    objectEndDate,
+    object_date,
+    object_begin_date,
+    object_end_date,
     medium,
     dimensions,
     country,
     classification,
-    objectURL)
+    object_url
+    )
 
-VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-ON CONFLICT (objectID) DO NOTHING
+VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+ON CONFLICT (object_id) DO NOTHING
 """
 
-def load_artworks(met_df):
+def load_artists(artists_df):
     conn = psycopg2.connect(
         database="met_db",
         user="sarahkichou",
@@ -57,12 +77,28 @@ def load_artworks(met_df):
 
     cursor = conn.cursor()
 
-    row_tuples = list(met_df.itertuples(index=False, name=None))
-
-    cursor.execute(create_table)
-    cursor.executemany(insert_artworks, row_tuples)
+    cursor.execute(create_artists_table)
+    row_tuples = list(artists_df.itertuples(index=False, name=None))
+    cursor.executemany(insert_artists, row_tuples)
     conn.commit()
     
     cursor.close()
     conn.close()
 
+def load_artworks(artworks_df):
+    conn = psycopg2.connect(
+        database="met_db",
+        user="sarahkichou",
+        host="localhost",
+        port="5432"
+    )
+
+    cursor = conn.cursor()
+
+    cursor.execute(create_artworks_table)
+    row_tuples = list(artworks_df.itertuples(index=False, name=None))
+    cursor.executemany(insert_artworks, row_tuples)
+    conn.commit()
+    
+    cursor.close()
+    conn.close()

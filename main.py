@@ -3,7 +3,7 @@ import os
 from collections import Counter
 from extract import fetch_object_ids, fetch_object_details
 from transform import transform_objects
-from load import load_artworks
+from load import load_artworks, load_artists
 
 def load_json_file(path):
     with open(path, "r") as file:
@@ -20,7 +20,6 @@ def get_object_ids(ids_file):
     objects = fetch_object_ids()
     save_json_file(ids_file, objects) 
     return objects
-
 
 def extract_details(objects, start, end, chunk_size):
     all_details = []
@@ -71,11 +70,11 @@ def main():
     objects = get_object_ids(ids_file)
     all_details = get_object_details(details_file, objects, start, end, chunk_size)
 
-    met_df = transform_objects(all_details)
-    print(met_df.shape)
-    print((met_df == "").sum())
+    artworks_df, artists_df = transform_objects(all_details)
+    print(artworks_df.shape, artists_df.shape)
 
-    load_artworks(met_df)
+    load_artists(artists_df)
+    load_artworks(artworks_df)
 
 if __name__ == "__main__":
     main()

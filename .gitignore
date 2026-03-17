@@ -7,7 +7,8 @@ __pycache__/
 *.pyc
 
 # Local data files
-object_ids.json
+data/object_ids.json
+data/object_details.json
 
 # OS files
 .DS_Store

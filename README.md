@@ -10,6 +10,8 @@ The pipeline records failed IDs and continues processing.
 
 During transformation, empty strings returned by the Met API were converted to NULL values to ensure correct handling of missing data in PostgreSQL.
 
+artists were deduplicated based on cleaned artist_display_name, but this does not fully solve spelling or naming variations.
+
 
 | Slice | Limit | Sleep | Success | Failed | Failure Code |
 |------|------|------|------|------|------|
