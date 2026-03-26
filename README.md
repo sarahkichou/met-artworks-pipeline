@@ -65,6 +65,20 @@ Artists were deduplicated based on cleaned `artist_display_name`, though this do
 - Idempotent loading implemented using `ON CONFLICT DO NOTHING`
 
 ---
+## Project Structure
+```
+met-artworks-pipeline/
+├── data/
+│   ├── object_ids.json        # Cached object IDs from the API
+│   └── object_details.json    # Cached extracted artwork records
+├── extract.py                 # Extraction logic and batching
+├── transform.py               # Cleaning, validation, and normalisation
+├── load.py                    # PostgreSQL load logic
+├── main.py                    # Pipeline orchestration
+├── requirements.txt           # Project dependencies
+└── README.md
+```
+---
 
 ## Extraction Experiments
 
